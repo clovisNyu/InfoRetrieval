@@ -41,7 +41,7 @@ def evaluate(engine):
     return (precision/totalQueries,recall/totalQueries)
 
 #-----------------------Convert FastText .vec files to gensim KeyedVectors---------------------------------------------------------------------------
-def vec2FileConvert(f,lang,path):
+def vec2File(f,lang,path):
     #f is the vector file
     #lang is the language of the model
     #path is the directory to save the file to
