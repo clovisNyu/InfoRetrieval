@@ -8,8 +8,11 @@ import multiprocessing
 
 
 #Program extracts information from CLEF's JSON at https://raw.githubusercontent.com/ag-sc/QALD/master/9/data/qald-9-train-multilingual.json
-model = KeyedVectors.load("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Program Files\\FastText\\Models\\alignedEnVecs",mmap="r")#Input file path to appropriate model
-stopWords=[line.split()[0] for line in open("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\SMART Stopwords.txt","r")]
+#Do note that this program takes a while to complete.
+
+modelPath="/alignedEnVecs"#Path to file produced by utils.vec2File()
+model = KeyedVectors.load(modelPath,mmap="r")#Input file path to appropriate model
+stopWords=[line.split()[0] for line in open("SMART Stopwords.txt","r")]
 
 #Various statistics that may be useful
 df={}#Document term frequency
