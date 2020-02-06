@@ -46,12 +46,10 @@ class corpus():#Corpus class to store the documents
             print("Invalid directory/fname. Both must be of type \"str\"")
 
 if __name__=="__main__":
-    corpusJSONPath="C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\CLEF\\FastText\\corpusVectors.json"
-    saveDirectory="C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\CLEF\\FastText"
-    fileName="CLEF-FastText"
+    corpusJSONPath=""#Path to file produced by corpusExtraction.py
+    saveDirectory=""#Directory to save file to
+    fileName=""#Name of saved corpus object
 
-    testCorpus=corpus(corpusJSON=corpusJSONPath)
-    testCorpus.export(saveDirectory,fileName)
-    # testCorpus=pickle.load(open("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\CLEF\\FastText\\CLEF-FastText.pkl","rb"))
-    # print(testCorpus.documents[0])
+    #testCorpus=corpus(corpusJSON=corpusJSONPath)
+    #testCorpus.export(saveDirectory,fileName)
 
