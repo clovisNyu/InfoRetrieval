@@ -42,7 +42,7 @@ def evaluate(engine):
 
 #-----------------------Convert FastText .vec files to gensim KeyedVectors---------------------------------------------------------------------------
 def vec2File(f,lang,path):
-    #f is the vector file
+    #f is the vector file, if from fasttext, it should take the form "wiki.{}.align.vec".format(languageCode)
     #lang is the language of the model
     #path is the directory to save the file to
     print("Extracting Data")
