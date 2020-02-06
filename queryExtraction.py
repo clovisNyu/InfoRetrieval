@@ -51,9 +51,11 @@ if __name__=="__main__":
                 try:
                     if content["language"]=="en":
                         questionVectors[question["id"]][content["language"]]=vectorize(content["string"],modelEn).tolist()[0]
+                        questionVectors[question["id"]]["en text"]="".join(a.lower() for a in content["string"] if a not in ")({,.[]/?!@#$%^&*`~+*\"\':;><}")
                     elif content["language"]=="es":
                         questionVectors[question["id"]][content["language"]]=vectorize(content["string"],modelEs).tolist()[0]
-                    questionVectors[question["id"]]["text"]="".join(a.lower() for a in content["string"] if a not in ")({,.[]/?!@#$%^&*`~+*\"\':;><}")
+                        questionVectors[question["id"]]["es text"]="".join(a.lower() for a in content["string"] if a not in ")({,.[]/?!@#$%^&*`~+*\"\':;><}")
+
                     questionVectors[question["id"]]["relevant documents"]=[]
                 except KeyError:#Some queries don't have relevant documents as answers, in which case we ignore the query
                     continue
