@@ -4,7 +4,7 @@ import numpy as np
 from corpus import token
 from corpus import corpus
 from gensim.models import KeyedVectors
-# from utils import evaluate
+from utils import evaluate
 
 
 #---------------------------Engine class that holds all methods required for search----------------------------------------------------
@@ -116,16 +116,16 @@ class engine():
         scores.sort(key=lambda x:x[1],reverse=True)
         return [word[0] for word in scores[:1]]#Return only the terms with the highest tf-idf scores
         
-modelPath="C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Program Files\\FastText\\Models\\alignedEnVecs"
-modelLang="en"
-corpusPath="C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\CLEF\\FastText\\CLEF-FastText.pkl"
+modelPath=""#Path to file produced by utils.vec2File()
+modelLang=""#Language of the model
+corpusPath=""#Path to file produced by corpus.export()
 
 
-testEngine=engine()
+#testEngine=engine()
 
-testEngine.loadCorpus(corpusPath) #Insert path to corpus object
-testEngine.loadModel(modelPath,lang=modelLang) #Insert path to model
-print(testEngine.search("board games by gmt",depth=10,feedback=1)) #Example search
+#testEngine.loadCorpus(corpusPath) #Insert path to corpus object
+#testEngine.loadModel(modelPath,lang=modelLang) #Insert path to model
+#print(testEngine.search("board games by gmt",depth=10,feedback=1)) #Example search
 
 # precision,recall=evaluate(testEngine)
 # print("Average Precision:{}\nAverage Recall:{}".format(precision,recall))
