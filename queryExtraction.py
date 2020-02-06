@@ -5,9 +5,14 @@ import numpy as np
 import time
 from gensim.models import KeyedVectors
 
+#This program extracts queries from the data provided by CLEF. It currently extracts English and Spanish queries but can easily be editted
+#to extract other languages
+
 #Load the appropriate models. It should be saved via KeyedVectors methods. Use the vec2File function in utils.py
-modelEn = KeyedVectors.load("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Program Files\\FastText\\Models\\alignedEnVecs",mmap="r")
-modelEs = KeyedVectors.load("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Program Files\\FastText\\Models\\alignedEsVecs",mmap="r")
+englishPath="alignedEnVecs"
+spanishPath="alignedEsVecs"
+modelEn = KeyedVectors.load(englishPath,mmap="r")
+modelEs = KeyedVectors.load(spanishPath,mmap="r")
 #Load file containing stopwords
 stopWords=[line.split()[0] for line in open("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\SMART Stopwords.txt","r")]
 
