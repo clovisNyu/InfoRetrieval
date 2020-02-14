@@ -4,6 +4,13 @@ import numpy as np
 from corpus import token
 from corpus import corpus
 from gensim.models import KeyedVectors
+import nltk
+from sys import maxsize
+import time
+import sys
+
+sys.path.insert(1, 'C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\CLEF')
+
 from utils import evaluate
 
 
@@ -57,21 +64,27 @@ class engine():
             else:
                 print("No available corpus")
 
-    def search(self,query,depth=10,lang="en",feedback=1):#Search method
+    def search(self,query,depth=10,lang="en",feedback=0):#Search method
         #depth changes the number of results returned
         #language indicates which model to use to search
         #feedback changes the number of psuedo-relevance feedback loops to use
-
+        stopWords=[line.split()[0] for line in open("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\SMART Stopwords.txt","r")]
+        start=time.time()
         if lang not in self.languageModels.keys():#If the language is not found
             print("Language model not found")
-            return#No search can be performed, return without result
+            return []#No search can be performed, return without result
         if lang!=self.currentLanguage:#If the language required for search is not current language
             self.model=KeyedVectors.load(self.languageModels[lang],mmap="r")#Load the appropriate language
             self.currentLanguage=lang
         #Form the query vector
         qVec=np.array(np.zeros((1,300)))[0]
         invalidCount=0
-        for qTerm in query.split():
+        queryTerms=[]
+        for term in query.split(" "):
+            cleanTerm="".join(a.lower() for a in term if a.isalnum() or a=="-" or a=="_")
+            if cleanTerm not in stopWords:
+                queryTerms.append(cleanTerm)
+        for qTerm in queryTerms:
             try:#If not OOV
                 qVec+=self.model[qTerm]*query.count(qTerm)*np.log10(len(self.corpus.documents)/self.corpus.tokens[qTerm].df)#Compute tf-idf weights
             except KeyError:#OOV
@@ -89,43 +102,94 @@ class engine():
             else:
                 score=0
             rankedDocs.append((doc[0],score,index))
+            index+=1
         rankedDocs.sort(key=lambda x:x[1], reverse=True)#Sort by highest score first
         if feedback==0:#If psuedo-relevance feedback has been performed sufficiently
-            return [doc[0] for doc in rankedDocs[:depth]]#Return the documents
+            
+            # topDocs=[(doc[0],self.corpus.documents[doc[2]]) for doc in rankedDocs[:depth*2]]
+            # topDocs=list(set(topDocs))
+            # reranked=self.WMDRerank(topDocs,queryTerms)
+            # if __name__=="__main__":
+            #     print("{} results found in {:.2f}s".format(depth,time.time()-start))
+            # return [doc[0] for doc in reranked[:depth]]#Return the documents
+            return [doc[0] for doc in rankedDocs[:depth]]
+
         else:#Otherwise, perform psuedo-relevance feedback
             feedback-=1
             topDocs=[]
             for doc in rankedDocs[:depth]:
-                topDocs.append(self.corpus.documents[doc[2]])
-            additionalQueryTerms=self.expandQuery(topDocs)#Find expanded query
+                topDocs.append((doc[0],self.corpus.documents[doc[2]]))
+            additionalQueryTerms=self.expandQuery(topDocs,queryTerms)#Find expanded query
             for term in additionalQueryTerms:
                 query+=" "+term+" "
             return self.search(query,depth=depth,lang=lang,feedback=feedback)#Reperform the search
 
-    def expandQuery(self,documents):#Psuedo-relevance feedback for query expansion
+    def expandQuery(self,documents,queryTerms):#Psuedo-relevance feedback for query expansion
+        print("Entering query expansion")
+        # documents=self.WMDRerank(documents,queryTerms)
         words=[]#All words in the documents
         stopWords=[line.split()[0] for line in open("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\SMART Stopwords.txt","r")]#File containing stopwords
-        for document in documents:
+        for url,document in documents:
             for word in document.split():
                 if word not in stopWords:
                     words.append(word)
         scores=[]
         uniqueWords=list(set(words))#All unique words
+        print("Expanding Query")
         for word in uniqueWords:
             scores.append((word,words.count(word)*self.corpus.tokens[word].df))#Calculate tf-idf scores for each word
         scores.sort(key=lambda x:x[1],reverse=True)
         return [word[0] for word in scores[:1]]#Return only the terms with the highest tf-idf scores
-        
-modelPath=""#Path to file produced by utils.vec2File()
-modelLang=""#Language of the model
-corpusPath=""#Path to file produced by corpus.export()
+    def WMDRerank(self,documents,queryTerms):
+        print("Reranking")
+        stopWords=[line.split()[0] for line in open("C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\SMART Stopwords.txt","r")]
+        documentDistances=[]
+        for url,document in documents:
+            documentDistance=maxsize
+            sentences=self.corpus.documentSentences[url]
+            for sentence in sentences:
+                averageSentenceDistance=0
+                for term in queryTerms:
+                    queryTermDistance=maxsize
+                    for sentenceTerm in sentence.split(" "):
+                        cleanSentenceTerm="".join(a.lower() for a in sentenceTerm if a.isalnum() or a=="-" or a=="_")
+                        if cleanSentenceTerm not in stopWords:
+                            distance=self.model.wmdistance(cleanSentenceTerm,term)
+                            if distance<queryTermDistance:
+                                queryTermDistance=distance
+                    if queryTermDistance!=maxsize:
+                        averageSentenceDistance+=queryTermDistance
+                if averageSentenceDistance!=0 and averageSentenceDistance/len(queryTerms)<documentDistance:
+                    documentDistance=averageSentenceDistance/len(queryTerms)
+            documentDistances.append((url,document,documentDistance))
+        documentDistances.sort(key=lambda x:x[2])
+        return [(doc[0],doc[1]) for doc in documentDistances]
+
+            
+    def export(self,fname,fpath=""):
+        print("Exporting")
+        if fpath!="":
+            if not os.path.isdir(fpath):
+                os.makedirs(fpath)
+            if fpath[-1]!="/" and fpath[-1]!="\\":
+                fpath+="\\"
+        fullPath=fpath+fname+".pkl"
+        pickle.dump(self,open(fullPath,"wb"))
+        print("Successfully exported")
+modelPath="C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Program Files\\FastText\\Models\\alignedEnVecs"
+modelLang="en"
+corpusPath="C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Corpus\\CLEF\\FastText\\CLEF-FastText.pkl"
+modelPathEs="C:\\Users\\Intern-RM1V\\Desktop\\Clovis\\Project\\Program Files\\FastText\\Models\\alignedEsVecs"
+
+testEngine=engine()
+
+testEngine.loadCorpus(corpusPath) #Insert path to corpus object
+testEngine.loadModel(modelPath,lang=modelLang) #Insert path to model
+testEngine.loadModel(modelPathEs,lang="es")
 
 
-#testEngine=engine()
+# precision,recall=singleEval(testEngine,210)
+# print("Precision:{}\nRecall:{}".format(precision,recall))
 
-#testEngine.loadCorpus(corpusPath) #Insert path to corpus object
-#testEngine.loadModel(modelPath,lang=modelLang) #Insert path to model
-#print(testEngine.search("board games by gmt",depth=10,feedback=1)) #Example search
-
-# precision,recall=evaluate(testEngine)
-# print("Average Precision:{}\nAverage Recall:{}".format(precision,recall))
+precision,recall=evaluate(testEngine)
+print("Average Precision:{}\nAverage Recall:{}".format(precision,recall))
